@@ -15,6 +15,33 @@
 			}
 		</script>
 		
+		<script>
+		   var transmitPad="";
+		  function handleFileSelect(evt) {
+			var f = evt.target.files[0]; // FileList object
+
+
+			  var reader = new FileReader();
+
+			  // Closure to capture the file information.
+			  reader.onload = (function(theFile) {
+				return function(e) {
+				  // Render thumbnail.
+				  /*
+				  var span = document.createElement('span');
+				  span.innerHTML = ['<textarea>', e.target.result, '</textarea>'].join('');
+				  document.getElementById('list').insertBefore(span, null);
+				  */
+				  transmitPad=e.target.result;
+				};
+			  })(f);
+
+			  // Read in the image file as a data URL.
+			  reader.readAsText(f);
+			
+		  }
+		</script>
+		
 		<style>
 		  .thumb {
 			height: 75px;
@@ -32,35 +59,15 @@
 		
 
 
-<input type="file" id="files" name="files[]" multiple />
+<input type="file" id="transmit" name="transmit" >Select Transmit Pad</input>
+<!-- 
+<input type="checkbox" name="vehicle" value="Bike"> I have a bike<br>
+<input type="file" id="files" name="files" >Select Receive Pad</input>
+
 <output id="list"></output>
+-->
 
 <script>
-  function handleFileSelect(evt) {
-    var files = evt.target.files; // FileList object
-
-    // Loop through the FileList and render image files as thumbnails.
-    for (var i = 0, f; f = files[i]; i++) {
-
-
-
-      var reader = new FileReader();
-
-      // Closure to capture the file information.
-      reader.onload = (function(theFile) {
-        return function(e) {
-          // Render thumbnail.
-          var span = document.createElement('span');
-          span.innerHTML = ['<textarea>', e.target.result, '</textarea>'].join('');
-          document.getElementById('list').insertBefore(span, null);
-        };
-      })(f);
-
-      // Read in the image file as a data URL.
-      reader.readAsText(f);
-    }
-  }
-
   document.getElementById('files').addEventListener('change', handleFileSelect, false);
 </script>
 	</body>
