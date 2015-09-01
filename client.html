@@ -3,18 +3,38 @@
 	<head>
 		<script src="/socket.io/socket.io.js"></script>
 		<script type="text/javascript">
+
+		Element.prototype.prependChild = function(child) { this.insertBefore(child, this.firstChild); };
 			var socketio = io.connect("127.0.0.1:1337");
 
 			socketio.on("message_to_client", function(data) {
-				document.getElementById("chatlog").innerHTML = ("<hr/>" + data['message'] + document.getElementById("chatlog").innerHTML);
+				var chatElement = document.getElementById("chatlog");
+				chatElement.prependChild(document.createElement("hr"));
+				var msg = data['message'];
+				var decryptedChars="";
+				for(var i=0; i<msg.length; i++)
+				{
+					decryptedChars+=String.fromCharCode(msg.charCodeAt(i)-1);
+				}
+
+
+				var t = document.createTextNode( decryptedChars);
+				chatElement.prependChild(t);
+
+				//document.getElementById("chatlog").innerHTML = ("<hr/>" + data['message'] + document.getElementById("chatlog").innerHTML);
 			});
 
 			function sendMessage() {
 				var msg = document.getElementById("message_input").value;
-				socketio.emit("message_to_server", { message : msg});
+				var encryptedChars="";
+				for(var i=0; i<msg.length; i++)
+				{
+					encryptedChars+=String.fromCharCode(msg.charCodeAt(i)+1);
+				}
+				socketio.emit("message_to_server", { message : encryptedChars});
 			}
 		</script>
-		
+
 		<script>
 		   var transmitPad="";
 		  function handleFileSelect(evt) {
@@ -38,10 +58,10 @@
 
 			  // Read in the image file as a data URL.
 			  reader.readAsText(f);
-			
+
 		  }
 		</script>
-		
+
 		<style>
 		  .thumb {
 			height: 75px;
@@ -49,18 +69,18 @@
 			margin: 10px 5px 0 0;
 		  }
 		</style>
-		
+
 	</head>
 	<body>
 		<input type="text" id="message_input"/>
 		<button onclick="sendMessage()">send</button>
 		<div id="chatlog"></div>
-		
-		
+
+
 
 
 <input type="file" id="transmit" name="transmit" >Select Transmit Pad</input>
-<!-- 
+<!--
 <input type="checkbox" name="vehicle" value="Bike"> I have a bike<br>
 <input type="file" id="files" name="files" >Select Receive Pad</input>
 
