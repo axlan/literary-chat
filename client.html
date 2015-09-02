@@ -31,7 +31,8 @@
 				{
 					encryptedChars+=String.fromCharCode(msg.charCodeAt(i)+1);
 				}
-				socketio.emit("message_to_server", { message : encryptedChars});
+				//socketio.emit("message_to_server", { message : encryptedChars});
+				socketio.emit("join_room", { room : encryptedChars, name : "bat"});
 			}
 		</script>
 
