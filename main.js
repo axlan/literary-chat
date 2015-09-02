@@ -26,17 +26,17 @@ io.sockets.on('connection', function(socket) {
 				{
 					user.partner=allClients[i];
 					allClients[i].partner=user;
+					allClients.splice(i, 1);
 					console.log("client "+user.name+" joined room "+user.room);
-					io.sockets.emit("room_joined",{"name":allClients[i].name});
+					io.sockets.emit("room_joined",{"name":user.partner.name});
 					user.partner.socket.emit("room_joined",{"name":user.name});
+					return;
 				}
 			}
 
 			allClients.push(user);
-			if(	user.partner==null)
-			{
-				console.log("client "+user.name+" created room "+user.room);
-			}
+			console.log("client "+user.name+" created room "+user.room);
+
 		}
 	});
 
@@ -52,6 +52,19 @@ io.sockets.on('connection', function(socket) {
 	socket.on('disconnect', function () {
 
       socket.emit('disconnected');
+			console.log("client "+user.name+" left room "+user.room);
+			if(user.partner!=null)
+			{
+				console.log("client "+user.partner.name+" left room "+user.partner.room);
+				user.partner.socket.emit('disconnected');
+				user.partner = {'socket':user.partner.socket};
+			}
+			var index = allClients.indexOf(user);
+			if (index > -1) {
+			    allClients.splice(index, 1);
+			}
+
+			user = {'socket':socket};
 
   });
 });
