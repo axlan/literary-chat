@@ -1,16 +1,15 @@
 {
-  "name": "nodejs_demochat",
+  "name": "literary_chat",
   "version": "1.0.0",
-  "description": "",
+  "description": "simple chat server using text based one time pads",
   "main": "main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "author": "axlan",
   "license": "ISC",
   "dependencies": {
     "express": "^4.13.3",
-    "socket.io": "^1.3.6",
-    "validator": "^4.0.5"
+    "socket.io": "^1.3.6"
   }
 }
