@@ -1,12 +1,42 @@
 var http = require('http'),
+		url = require('url'),
+    path = require('path');
 	fs = require('fs');
 
+	// ADDED THIS FUNCTION HERE -----------------------------------------------------
+	function handleStaticPages(pathName, res) {
+	    var ext = path.extname(pathName);
+	    switch(ext) {
+	        case '.css':
+	            res.writeHead(200, {"Content-Type": "text/css"});
+	            fs.readFile('./' + pathName, 'utf8', function(err, fd) {
+	                res.end(fd);
+	            });
+	            console.log('Routed for Cascading Style Sheet '+ pathName +' Successfully\n');
+	        break;
+	        case '.js':
+	            res.writeHead(200, {"Content-Type": "text/javascript"});
+	            fs.readFile('./' + pathName, 'utf8', function(err, fd) {
+	                res.end(fd);
+	            });
+	            console.log('Routed for Javascript '+ pathName +' Successfully\n');
+	        break;
+	    }
+	}
+	// ADDED THIS FUNCTION HERE -----------------------------------------------------
+
 var app = http.createServer(function (request, response) {
-	fs.readFile("client.html", 'utf-8', function (error, data) {
-		response.writeHead(200, {'Content-Type': 'text/html'});
-		response.write(data);
-		response.end();
-	});
+	var pathName = url.parse(request.url).pathname;
+	var pathext = path.extname(pathName);
+	if (pathext === '.js' || pathext === '.css') {
+					 handleStaticPages(pathName, response);
+	} else {
+			fs.readFile("client.html", 'utf-8', function (error, data) {
+				response.writeHead(200, {'Content-Type': 'text/html'});
+				response.write(data);
+				response.end();
+			});
+	}
 }).listen(1337);
 
 
@@ -41,11 +71,11 @@ io.sockets.on('connection', function(socket) {
 	});
 
 	socket.on('message_to_server', function(data) {
-		if(connected>0)
+		if(	user.partner!=null)
 		{
 			var escaped_message = data["message"];
-			console.log(escaped_message);
-			io.sockets.emit("message_to_client",{ message: escaped_message });
+			console.log(user.name + " sent msg "+escaped_message+ " to "+user.partner.name);
+			user.partner.socket.emit("message_to_client",{ message: escaped_message });
 		}
 	});
 

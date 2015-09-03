@@ -1,43 +1,140 @@
 <!DOCTYPE html>
 <html>
 	<head>
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
 		<script src="/socket.io/socket.io.js"></script>
+		<link rel="stylesheet" type="text/css" href="mystyle.css">
+
+
 		<script type="text/javascript">
 
 		Element.prototype.prependChild = function(child) { this.insertBefore(child, this.firstChild); };
-			var socketio = io.connect("127.0.0.1:1337");
+			var socketio = io.connect(document.domain+":1337");
+
+			var state=0;
+			var userName="";
+			var partnerName="";
+			var rxIndex=0;
+			var txIndex=0;
+
+			socketio.on("disconnected", function(data) {
+				state=0;
+				document.getElementById("message_input").placeholder="Enter Name";
+				document.getElementById("message_input").disabled = false;
+			});
+
+			socketio.on("room_joined", function(data) {
+				state=3;
+				partnerName=data['name'];
+				document.getElementById("message_input").placeholder="Enter Message";
+				document.getElementById("message_input").disabled = false;
+			});
+
+
+			function printLine(msg,color)
+			{
+				var chatElement = document.getElementById("chatlog");
+				//chatElement.prependChild(document.createElement("hr"));
+				var t = document.createTextNode( msg);
+				var span = document.createElement('span');
+				var br = document.createElement('br');
+				span.style.color = color;
+				span.appendChild(t);
+				span.appendChild(br);
+				chatElement.appendChild(span);
+				document.getElementById("chatlog").scrollTop = document.getElementById("chatlog").scrollHeight
+			}
+
+			function print(name,msg)
+			{
+				var chatElement = document.getElementById(name);
+				//chatElement.prependChild(document.createElement("hr"));
+				var t = document.createTextNode( msg);
+				chatElement.appendChild(t);
+				document.getElementById(name).scrollTop = document.getElementById(name).scrollHeight
+			}
 
 			socketio.on("message_to_client", function(data) {
-				var chatElement = document.getElementById("chatlog");
-				chatElement.prependChild(document.createElement("hr"));
+
 				var msg = data['message'];
 				var decryptedChars="";
-				for(var i=0; i<msg.length; i++)
+				var startIdx=rxIndex;
+				if(receivePad!=null)
 				{
-					decryptedChars+=String.fromCharCode(msg.charCodeAt(i)-1);
+					for(var i=0; i<msg.length; i++)
+					{
+						if(rxIndex>=transmitPad.length)
+						{
+							alert("receive pad ran out of text!");
+							receivePad=null;
+							return;
+						}
+						decryptedChars+=String.fromCharCode(msg.charCodeAt(i)-receivePad.charCodeAt(rxIndex++));
+					}
+					print("receiveLog", receivePad.substring(startIdx,rxIndex));
+
+				} else {
+					decryptedChars=msg;
 				}
 
-
-				var t = document.createTextNode( decryptedChars);
-				chatElement.prependChild(t);
-
-				//document.getElementById("chatlog").innerHTML = ("<hr/>" + data['message'] + document.getElementById("chatlog").innerHTML);
+				printLine(partnerName+": "+decryptedChars,"Red");
 			});
+
+
+
 
 			function sendMessage() {
 				var msg = document.getElementById("message_input").value;
-				var encryptedChars="";
-				for(var i=0; i<msg.length; i++)
+				if(msg.length==0)
 				{
-					encryptedChars+=String.fromCharCode(msg.charCodeAt(i)+1);
+					return;
 				}
-				//socketio.emit("message_to_server", { message : encryptedChars});
-				socketio.emit("join_room", { room : encryptedChars, name : "bat"});
-			}
-		</script>
 
-		<script>
-		   var transmitPad="";
+				document.getElementById("message_input").value="";
+				if(state==0)
+				{
+					document.getElementById("message_input").placeholder="Enter Room Name";
+					userName=msg;
+					state++;
+				}
+				else if(state==1)
+				{
+					document.getElementById("message_input").placeholder = "Waiting";
+					document.getElementById("message_input").disabled = true;
+					socketio.emit("join_room", { room : msg, name : userName});
+					state++;
+				}
+				else if(state==3)
+				{
+					printLine(userName+": "+msg,"Blue");
+					var encryptedChars="";
+					var startIdx=txIndex;
+					if(transmitPad!=null)
+					{
+						for(var i=0; i<msg.length; i++)
+						{
+							if(txIndex>=transmitPad.length)
+							{
+								alert("transmit pad ran out of text!");
+								transmitPad=null;
+								return;
+							}
+							encryptedChars+=String.fromCharCode(msg.charCodeAt(i)+transmitPad.charCodeAt(txIndex++));
+						}
+						print("transmitLog", transmitPad.substring(startIdx,txIndex));
+						//document.getElementById("transmitLog").value += transmitPad.substring(startIdx,txIndex);
+						//document.getElementById("transmitLog").scrollTop = document.getElementById("transmitLog").scrollHeight
+					}
+					else {
+						encryptedChars=msg;
+					}
+					socketio.emit("message_to_server", { message : encryptedChars});
+				}
+
+			}
+
+		   var transmitPad=null;
+			 var receivePad=null;
 		  function handleFileSelect(evt) {
 			var f = evt.target.files[0]; // FileList object
 
@@ -53,43 +150,58 @@
 				  span.innerHTML = ['<textarea>', e.target.result, '</textarea>'].join('');
 				  document.getElementById('list').insertBefore(span, null);
 				  */
-				  transmitPad=e.target.result;
+					if(evt.target.id=="fileTx")
+					{
+				  	transmitPad=e.target.result;
+					} else {
+						receivePad=e.target.result;
+					}
 				};
 			  })(f);
 
-			  // Read in the image file as a data URL.
+
 			  reader.readAsText(f);
 
 		  }
 		</script>
 
-		<style>
-		  .thumb {
-			height: 75px;
-			border: 1px solid #000;
-			margin: 10px 5px 0 0;
-		  }
-		</style>
-
 	</head>
 	<body>
-		<input type="text" id="message_input"/>
-		<button onclick="sendMessage()">send</button>
-		<div id="chatlog"></div>
 
 
 
+		<div class="row">
+		  <div class="col-sm-4">
+				<p>Transmit Pad</p>
+				<div class="text_area"  id="transmitLog"  style="background-color:lavender;"></div>
+			</div>
+		  <div class="col-sm-4">
+				<p>Chat</p>
+				<div class="text_area"  id="chatlog"></div>
+			</div>
+		  <div class="col-sm-4">
+				<p>Receive Pad</p>
+				<div class="text_area"  id="receiveLog" style="background-color:lightgrey;"></div>
+			</div>
+		</div>
 
-<input type="file" id="transmit" name="transmit" >Select Transmit Pad</input>
-<!--
-<input type="checkbox" name="vehicle" value="Bike"> I have a bike<br>
-<input type="file" id="files" name="files" >Select Receive Pad</input>
+		<br>
+		<br>
 
-<output id="list"></output>
--->
+		<input type="text" id="message_input" placeholder="Enter Name" onkeydown="if (event.keyCode == 13) { sendMessage() }"/>
+
+		<br>
+		<br>
+
+		Select Receive Pad <input type="file" id="fileRx" name="fileRx" ></input>
+		Select Transmit Pad <input type="file" id="fileTx" name="fileTx" ></input>
+
+
+
 
 <script>
-  document.getElementById('files').addEventListener('change', handleFileSelect, false);
+  document.getElementById('fileRx').addEventListener('change', handleFileSelect, false);
+	document.getElementById('fileTx').addEventListener('change', handleFileSelect, false);
 </script>
 	</body>
 </html>
