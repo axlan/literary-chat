@@ -9,6 +9,15 @@
 		<script type="text/javascript">
 
 		Element.prototype.prependChild = function(child) { this.insertBefore(child, this.firstChild); };
+
+			function removeChildren(name)
+			{
+				var myNode = document.getElementById(name);
+				while (myNode.firstChild) {
+				    myNode.removeChild(myNode.firstChild);
+				}
+			}
+
 			var socketio = io.connect(document.domain+":1337");
 
 			var state=0;
@@ -136,7 +145,12 @@
 		   var transmitPad=null;
 			 var receivePad=null;
 		  function handleFileSelect(evt) {
-			var f = evt.target.files[0]; // FileList object
+				var f = evt.target.files[0]; // FileList object
+
+				if(!f) {
+					receivePad=null
+					return;
+				}
 
 
 			  var reader = new FileReader();
@@ -154,9 +168,11 @@
 					{
 						txIndex=0;
 				  	transmitPad=e.target.result;
+						removeChildren("receiveLog");
 					} else {
 						rxIndex=0;
 						receivePad=e.target.result;
+						removeChildren("transmitLog");
 					}
 				};
 			  })(f);
