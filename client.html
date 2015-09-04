@@ -72,7 +72,7 @@
 				{
 					for(var i=0; i<msg.length; i++)
 					{
-						if(rxIndex>=transmitPad.length)
+						if(rxIndex>=receivePad.length)
 						{
 							alert("receive pad ran out of text!");
 							receivePad=null;
@@ -168,11 +168,11 @@
 					{
 						txIndex=0;
 				  	transmitPad=e.target.result;
-						removeChildren("receiveLog");
+						removeChildren("transmitLog");
 					} else {
 						rxIndex=0;
 						receivePad=e.target.result;
-						removeChildren("transmitLog");
+						removeChildren("receiveLog");
 					}
 				};
 			  })(f);
